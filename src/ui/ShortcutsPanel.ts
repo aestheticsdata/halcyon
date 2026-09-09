@@ -83,6 +83,16 @@ class ShortcutsPanel {
 
     chip.append(key, action);
 
+    // Marks for the demo harness (HAL-192): the chip is the one place a binding
+    // is on screen, so the take hovers it before pressing the key it prints. The
+    // companion is the action id rather than the key, because that is the name
+    // the table and the registry already share.
+    chip.dataset.testid = "shortcut";
+
+    if (binding.handler) {
+      chip.dataset.shortcut = binding.handler;
+    }
+
     // The affordance says "unbuilt", so it may only ever appear on a binding
     // with nothing behind it. Saying it about a key that works would be the
     // same lie in the other direction.

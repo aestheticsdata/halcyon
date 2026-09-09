@@ -138,21 +138,22 @@ class CameraSection {
     this.projectionGrid.setChips(PROJECTIONS.map((key) => ({ id: key, label: key })));
     this.projectionGrid.setActive(DEFAULT_PROJECTION);
 
-    this.elev = this.buildAngle("ELEV", ELEV_LIMIT, DEFAULT_CAM_ELEV_DEGREES, (value) => {
+    this.elev = this.buildAngle("ELEV", "camera-elev", ELEV_LIMIT, DEFAULT_CAM_ELEV_DEGREES, (value) => {
       this.store.setState({ camElev: value });
       options.onElev(value);
     });
-    this.azim = this.buildAngle("AZIM", AZIM_LIMIT, DEFAULT_CAM_AZIM_DEGREES, (value) => {
+    this.azim = this.buildAngle("AZIM", "camera-azim", AZIM_LIMIT, DEFAULT_CAM_AZIM_DEGREES, (value) => {
       this.store.setState({ camAzim: value });
       options.onAzim(value);
     });
-    this.camRoll = this.buildAngle("ROLL", CAM_ROLL_LIMIT, DEFAULT_CAM_ROLL_DEGREES, (value) => {
+    this.camRoll = this.buildAngle("ROLL", "camera-roll", CAM_ROLL_LIMIT, DEFAULT_CAM_ROLL_DEGREES, (value) => {
       this.store.setState({ camRoll: value });
       options.onCamRoll(value);
     });
 
     this.fov = new SliderRow({
       label: "FOV",
+      testId: "camera-fov",
       min: FOV_MIN,
       max: FOV_MAX,
       value: DEFAULT_FOV,
@@ -165,6 +166,7 @@ class CameraSection {
 
     this.zoom = new SliderRow({
       label: "ZOOM",
+      testId: "camera-zoom",
       min: ZOOM_MIN,
       max: ZOOM_MAX,
       value: DEFAULT_ZOOM_SLIDER_VALUE,
@@ -268,9 +270,16 @@ class CameraSection {
   }
 
   // Symmetric about zero, which is what a range input can express.
-  private buildAngle(label: string, limit: number, value: number, onInput: (value: number) => void): SliderRow {
+  private buildAngle(
+    label: string,
+    testId: string,
+    limit: number,
+    value: number,
+    onInput: (value: number) => void,
+  ): SliderRow {
     return new SliderRow({
       label,
+      testId,
       min: -limit,
       max: limit,
       value,

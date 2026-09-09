@@ -62,6 +62,10 @@ class ShapePicker {
     this.trigger.className = "shape-picker__trigger";
     this.trigger.setAttribute("aria-haspopup", "listbox");
     this.trigger.setAttribute("aria-expanded", "false");
+    // Marks for the demo harness (HAL-192): the closed control and, below, each
+    // row with the shape it stands for. data-chip-id on the rows is ChipGrid's
+    // vocabulary, borrowed for the styling the two share, and is not the pair.
+    this.trigger.dataset.testid = "shape-picker";
     this.trigger.addEventListener("click", this.toggle);
 
     // The closed control owns its own three nodes rather than cloning the
@@ -176,6 +180,8 @@ class ShapePicker {
     option.setAttribute("role", "option");
     option.setAttribute("aria-selected", "false");
     option.dataset.chipId = shape.id;
+    option.dataset.testid = "shape-option";
+    option.dataset.shape = shape.id;
 
     const label = document.createElement("span");
     label.className = "shape-picker__label";

@@ -34,6 +34,11 @@ export interface ChipGridOptions {
   // unlit unconditionally. They also drop aria-pressed, because a button with
   // no pressed state announcing one is worse than a plain button.
   momentary?: boolean;
+  // A data-testid stamped on every chip of this grid, for the demo harness
+  // (HAL-192). Per grid rather than per chip because data-chip-id already says
+  // which chip a button is; what it cannot say is which of the five grids the
+  // id belongs to, and "WIRE" means one thing here and nothing elsewhere.
+  testId?: string;
 }
 
 class ChipGrid {
@@ -42,6 +47,7 @@ class ChipGrid {
   private readonly onPick: (id: string) => void;
   private readonly placeholder: { title: string; describedBy: string } | null;
   private readonly momentary: boolean;
+  private readonly testId: string | null;
   private readonly chips: Map<string, HTMLButtonElement>;
 
   constructor(options: ChipGridOptions) {
@@ -52,6 +58,7 @@ class ChipGrid {
     this.onPick = options.onPick;
     this.placeholder = options.placeholder ?? null;
     this.momentary = options.momentary ?? false;
+    this.testId = options.testId ?? null;
     this.chips = new Map();
     // A custom property rather than a class per count: the column count is a
     // number the grid is given, and chip.css already reads --chip-cols.
@@ -91,6 +98,10 @@ class ChipGrid {
     chip.type = "button";
     chip.className = `chip ${this.modifier}`;
     chip.dataset.chipId = descriptor.id;
+
+    if (this.testId !== null) {
+      chip.dataset.testid = this.testId;
+    }
 
     if (!this.momentary) {
       chip.setAttribute("aria-pressed", "false");

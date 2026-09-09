@@ -110,6 +110,7 @@ class EnvironmentSection {
 
     this.fog = new SliderRow({
       label: "FOG",
+      testId: "environment-fog",
       min: FOG_MIN,
       max: FOG_MAX,
       value: DEFAULT_FOG,

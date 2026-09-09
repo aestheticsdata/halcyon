@@ -127,6 +127,7 @@ class MaterialSection {
 
     this.uvScale = new SliderRow({
       label: "UV SCALE",
+      testId: "material-uv-scale",
       min: UV_MIN,
       max: UV_MAX,
       value: DEFAULT_UV_SCALE,

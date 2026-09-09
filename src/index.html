@@ -282,7 +282,11 @@
                  is invisible to layout — a HUD anchored to the card would inset
                  itself from the bars instead of from the image. Everything
                  below is anchored to the stage. -->
-            <div class="viewport-stage">
+            <!-- The demo harness's handle on the picture (HAL-192). Main also
+                 writes data-transition here — entering, switching, idle — from
+                 the shape transition machine, so a take can wait for a switch
+                 to finish rather than sleep for its duration. -->
+            <div class="viewport-stage" data-testid="viewport">
               <canvas id="canvasID" width="1024" height="640">canvas not available in this browser</canvas>
 
               <!-- Always on. `hudOverlays` was a Claude Design preview control

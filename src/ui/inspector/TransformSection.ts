@@ -92,21 +92,22 @@ class TransformSection {
       scale: DEFAULT_SCALE,
     });
 
-    this.pitch = this.buildAngle("PITCH", ANGLE_LIMIT, DEFAULT_PITCH_DEGREES, (value) => {
+    this.pitch = this.buildAngle("PITCH", "transform-pitch", ANGLE_LIMIT, DEFAULT_PITCH_DEGREES, (value) => {
       this.store.setState({ pitch: value });
       options.onPitch(value);
     });
-    this.yaw = this.buildAngle("YAW", ANGLE_LIMIT, DEFAULT_YAW_DEGREES, (value) => {
+    this.yaw = this.buildAngle("YAW", "transform-yaw", ANGLE_LIMIT, DEFAULT_YAW_DEGREES, (value) => {
       this.store.setState({ yaw: value });
       options.onYaw(value);
     });
-    this.roll = this.buildAngle("ROLL", ANGLE_LIMIT, DEFAULT_ROLL_DEGREES, (value) => {
+    this.roll = this.buildAngle("ROLL", "transform-roll", ANGLE_LIMIT, DEFAULT_ROLL_DEGREES, (value) => {
       this.store.setState({ roll: value });
       options.onRoll(value);
     });
 
     this.spin = new SliderRow({
       label: "SPIN",
+      testId: "transform-spin",
       min: SPIN_MIN,
       max: SPIN_MAX,
       value: DEFAULT_SPIN_DEGREES_PER_SECOND,
@@ -123,6 +124,7 @@ class TransformSection {
 
     this.scale = new SliderRow({
       label: "SCALE",
+      testId: "transform-scale",
       min: SCALE_MIN,
       max: SCALE_MAX,
       value: DEFAULT_SCALE,
@@ -186,9 +188,16 @@ class TransformSection {
   // engine-space bounds could not: neutral was 320 of 0..800 for pitch, 512 for
   // yaw and 0 of -1000..1200 for roll, a different fraction of the track on each
   // of the three. All three share one limit now, so all three sit mid-track.
-  private buildAngle(label: string, limit: number, value: number, onInput: (value: number) => void): SliderRow {
+  private buildAngle(
+    label: string,
+    testId: string,
+    limit: number,
+    value: number,
+    onInput: (value: number) => void,
+  ): SliderRow {
     return new SliderRow({
       label,
+      testId,
       min: -limit,
       max: limit,
       value,

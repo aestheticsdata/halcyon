@@ -78,6 +78,7 @@ import ViewportExpander from "@ui/ViewportExpander";
 import ViewportHUD from "@ui/ViewportHUD";
 
 import type { SceneryLayers } from "@animations/SceneryFade";
+import type { ShapeTransitionState } from "@animations/shapeTransition/types";
 import type { BootContext } from "@app/Bootstrapper";
 import type { CameraAngles } from "@camera/CameraRig";
 import type { ViewPresetKey } from "@camera/viewPresets";
@@ -138,6 +139,9 @@ class Main {
   // every intermediate layout during a drag, and each resize reallocates the
   // backing store and repaints the whole background.
   private pendingResizeRaf: number | null;
+  // The transition machine's state as last written onto the stage, so the
+  // attribute is touched on the frames it changes and on no other.
+  private lastTransitionState: ShapeTransitionState | null;
   private readonly sceneGraph: SceneGraphPanel;
   // The molecule rule's own state (HAL-174): how much of the sky and the floor
   // are still standing, and what the pair was before a molecule took them.
@@ -259,6 +263,7 @@ class Main {
     this.viewportStage = viewportStage;
     this.resizeObserver = null;
     this.pendingResizeRaf = null;
+    this.lastTransitionState = null;
     this.sceneGraph = new SceneGraphPanel(this.uiState);
     this.meshHidden = this.sceneGraph.isMeshHidden();
     this.lightHidden = this.sceneGraph.isLightHidden();
@@ -1123,6 +1128,23 @@ class Main {
     this.uiState.setState({ drawnTriangles: count });
   }
 
+  // The machine's state, on the stage as data-transition (HAL-192). It is the
+  // one fact about the picture nothing else exposes: whether a shape is still
+  // arriving. The demo harness waits on it rather than on a sleep tuned to
+  // TRANSITION_DURATION_MS, and every still it cuts is shot on a settled mesh
+  // because of it. Written only when the state moves — an attribute write per
+  // frame would be the cost the readouts' 90ms gate exists to avoid.
+  private publishTransitionState() {
+    const state = this.shapes.transitionState;
+
+    if (state === this.lastTransitionState) {
+      return;
+    }
+
+    this.lastTransitionState = state;
+    this.viewportStage.dataset.transition = state;
+  }
+
   // Called after the frame is painted rather than before it, and that ordering
   // is the whole correctness argument: projectedBounds reads whatever the
   // points currently hold, so it has to run downstream of the pose
@@ -1188,6 +1210,7 @@ class Main {
 
     this.shapes.update(timestamp);
     this.shapes.syncQueue(timestamp);
+    this.publishTransitionState();
 
     // The scenery's withdrawal rides the same clock and the same beat as the
     // transition above (HAL-174), so the world and the shape settle together.
