@@ -13,10 +13,13 @@
     "lint": "biome check ./src",
     "lint:fix": "biome check --write ./src",
     "lint:rules": "node scripts/check-lint-rules.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "video:generate": "playwright test --config playwright.demo.config.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.3",
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^25.0.3",
     "typescript": "^5.9.3",
     "vite": "^7.2.7",
     "vitest": "^4.1.10"

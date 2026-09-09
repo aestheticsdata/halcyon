@@ -7,6 +7,7 @@
 // request made mid-flight — later requests overwrite it, so clicking through
 // five primitives lands on the fifth and plays two animations, not five.
 
+import type { ShapeTransitionState } from "@animations/shapeTransition/types";
 import type ShapeTransitionMachine from "@animations/shapeTransitionMachine";
 import type { Data3D } from "@data/types";
 import type Mesh from "@primitives/Mesh";
@@ -66,6 +67,13 @@ class ShapeSwitcher {
   // the shape being left rather than the one on screen.
   public get target(): string | null {
     return this.targetPrimitiveName;
+  }
+
+  // The machine's own state name, for the one reader outside the render path:
+  // Main publishes it on the stage, so the demo harness (HAL-192) can wait for a
+  // switch to finish rather than sleep for its duration.
+  public get transitionState(): ShapeTransitionState {
+    return this.transitionMachine.state;
   }
 
   // An arrow property: it is handed to the primitive picker as a change

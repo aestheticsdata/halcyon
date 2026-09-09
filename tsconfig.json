@@ -17,7 +17,11 @@
       "@textures/*": ["./src/textures/*"],
       "@rendering/*": ["./src/rendering/*"],
       "@scene/*": ["./src/scene/*"],
-      "@ui/*": ["./src/ui/*"]
+      "@ui/*": ["./src/ui/*"],
+      // Not mirrored in vite.config.js, and the only alias that is not: nothing
+      // under e2e/ is bundled. Playwright resolves it from this file when it
+      // runs the demo harness, and tsc when `pnpm run typecheck` covers it.
+      "@e2e/*": ["./e2e/*"]
     },
     "module": "ESNext",
     // `node` is TypeScript's node10 algorithm, deprecated and removed in TS 7. Vite is a
@@ -29,5 +33,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "vite-env.d.ts"]
+  "include": ["src", "e2e", "vite-env.d.ts"]
 }

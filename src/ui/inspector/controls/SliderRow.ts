@@ -25,6 +25,10 @@ export interface SliderRowOptions {
   // The opacity row hands its own id over, because RenderPipelinePanel resolves
   // that element by id to own `disabled` and the follow-cursor tooltip.
   inputId?: string;
+  // A data-testid on the range input, for the demo harness (HAL-192). The rows
+  // are otherwise told apart only by the label they print, and a take that
+  // aimed at a word would break on the first rewording.
+  testId?: string;
 }
 
 class SliderRow {
@@ -66,6 +70,10 @@ class SliderRow {
     if (options.inputId) {
       this.input.id = options.inputId;
       this.root.htmlFor = options.inputId;
+    }
+
+    if (options.testId) {
+      this.input.dataset.testid = options.testId;
     }
 
     if (options.placeholder) {

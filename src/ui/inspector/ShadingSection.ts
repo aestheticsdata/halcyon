@@ -51,6 +51,7 @@ class ShadingSection {
       selector: options.chipGridSelector,
       modifier: "chip--mode",
       columns: 3,
+      testId: "shading-chip",
       onPick: this.pick,
     });
     this.chips.setChips(CHIPS);

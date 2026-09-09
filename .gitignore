@@ -6,3 +6,11 @@ dist-ssr
 .parcel-cache/*
 .idea
 docs/superpowers
+
+# The demo film harness (see e2e/demo/README.md): a take spools every frame here
+# as JPEG before the encode, and the mp4, the chapter files and the stills land
+# beside them.
+e2e/demo/out/
+# Playwright's own run record (`.last-run.json`), written beside every `video:generate` even with
+# traces and video off; nothing in it is worth keeping.
+test-results/

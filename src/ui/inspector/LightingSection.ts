@@ -57,6 +57,7 @@ class LightingSection {
 
     this.azimuth = new SliderRow({
       label: "AZIMUTH",
+      testId: "lighting-azimuth",
       min: 0,
       max: 360,
       value: DEFAULT_AZIMUTH,
