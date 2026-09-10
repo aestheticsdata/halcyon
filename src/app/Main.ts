@@ -14,9 +14,13 @@ import FPSMeter from "@app/FPSMeter";
 import RenderLoop from "@app/RenderLoop";
 import ShapeSwitcher from "@app/ShapeSwitcher";
 import CameraRig from "@camera/CameraRig";
+import viewPresets from "@camera/viewPresets";
 import data from "@data/data";
 import moleculeInfo from "@data/moleculeInfo";
 import shapeInfo from "@data/shapeInfo";
+import MIDIAccessGate from "@input/midi/MIDIAccessGate";
+import MIDIBindingRouter from "@input/midi/MIDIBindingRouter";
+import midiBindings from "@input/midi/midiBindings";
 import PointerOrbit from "@input/PointerOrbit";
 import MeshFactory from "@primitives/MeshFactory";
 import RenderTarget from "@primitives/RenderTarget";
@@ -29,12 +33,13 @@ import Lighting from "@rendering/Lighting";
 import { DEFAULT_MESH_MATERIAL } from "@rendering/material";
 import { dprEffectiveFor } from "@rendering/pixelBudget";
 import RenderStats from "@rendering/RenderStats";
-import { impliesWireframe } from "@rendering/shadingMode";
+import { impliesWireframe, SHADING_MODES } from "@rendering/shadingMode";
 import ShapeRig from "@scene/ShapeRig";
 import ProceduralTextures from "@textures/ProceduralTextures";
 import TextureRegistry from "@textures/TextureRegistry";
 import imageTextures from "@textures/textureKeys";
 import ActionRegistry from "@ui/ActionRegistry";
+import ControlRegistry from "@ui/ControlRegistry";
 import {
   DEFAULT_CAM_AZIM_DEGREES,
   DEFAULT_CAM_ELEV_DEGREES,
@@ -57,6 +62,7 @@ import ShapeThumbnails from "@ui/inspector/ShapeThumbnails";
 import WorldTab from "@ui/inspector/WorldTab";
 import KeyboardShortcuts from "@ui/KeyboardShortcuts";
 import MaterialSummary from "@ui/MaterialSummary";
+import MIDIPanel from "@ui/MIDIPanel";
 import OrbitInvertToggles from "@ui/OrbitInvertToggles";
 import QuickToggles from "@ui/QuickToggles";
 import RenderPipelinePanel from "@ui/RenderPipelinePanel";
@@ -154,6 +160,17 @@ class Main {
   private readonly quickToggles: QuickToggles;
   private readonly transport: TransportBar;
   private readonly actions: ActionRegistry;
+  // The continuous half of the same idea, and constructed before the tabs
+  // rather than beside ActionRegistry: the sections register their rows as they
+  // build them, so it has to exist by the time ShapeTab does.
+  private readonly controls: ControlRegistry;
+  // The MIDI surface, in three parts: the platform shell, the dispatcher and the
+  // card that documents both. Constructed at boot and inert until the card's
+  // CONNECT button is pressed — nothing is requested from the browser, and no
+  // binding is resolved, until a device is actually there.
+  private readonly midiGate: MIDIAccessGate;
+  private readonly midiRouter: MIDIBindingRouter;
+  private readonly midiPanel: MIDIPanel;
   // The four file-and-clipboard actions (E8b). It registers its own handlers
   // rather than being called from registerActions below, because unlike every
   // other action in the console none of them touches the engine — what they
@@ -325,9 +342,11 @@ class Main {
     // Before the pipeline panel, and that order is load-bearing: this tab
     // creates #opacitySlider, and RenderPipelinePanel resolves it in its own
     // constructor to own the disabled state and the tooltip.
+    this.controls = new ControlRegistry();
     this.shapeTab = new ShapeTab({
       objects3D: this.objects3D,
       store: this.uiState,
+      controls: this.controls,
       // Lit from the click, not from the transition: a pick made while one is
       // animating is parked in the switcher's queue and does not reach
       // onTransitionStart for up to 1250ms, which would leave the chip the user
@@ -348,6 +367,7 @@ class Main {
     });
     this.pipeline = new RenderPipelinePanel();
     this.renderTab = new RenderTab({
+      controls: this.controls,
       store: this.uiState,
       wireframe: this.pipeline.wireframe,
       cullBackfaces: this.pipeline.cullBackfaces,
@@ -359,6 +379,7 @@ class Main {
     });
     this.worldTab = new WorldTab({
       store: this.uiState,
+      controls: this.controls,
       onFov: (degrees) => this.changeFov(degrees),
       onZoom: (value) => this.changeZoom(value),
       onProjection: (mode) => this.changeProjection(mode),
@@ -385,6 +406,47 @@ class Main {
     this.transport = new TransportBar();
     this.actions = new ActionRegistry();
     this.keyboard = new KeyboardShortcuts(this.actions);
+
+    this.midiRouter = new MIDIBindingRouter({
+      controls: this.controls,
+      actions: this.actions,
+      bindings: midiBindings,
+      // The console's own clock, so a sweep costs one repaint per frame rather
+      // than one per byte. Injected into the router rather than reached for
+      // inside it, which is what keeps its ordering rules in the node suite.
+      schedule: (flush) => requestAnimationFrame(flush),
+      cancel: (handle) => cancelAnimationFrame(handle),
+      onTraffic: (traffic) => this.midiPanel.setTraffic(traffic),
+    });
+    this.midiGate = new MIDIAccessGate({
+      onMessage: (data) => this.midiRouter.receive(data),
+      onStatus: (status) => {
+        // Bound on attach rather than at boot: this is the call that throws on a
+        // binding naming something nothing registered, and a throw wired into
+        // the opening frame would take the console down for every visitor who
+        // has no controller. deploy-halcyon.sh runs `pnpm build` alone, so
+        // nothing type-checks on the way to production — the binding suite is
+        // what catches a bad table, and this is the belt behind it.
+        if (status.state === "connected") {
+          this.midiRouter.bind();
+        }
+
+        this.midiPanel.setStatus(status);
+      },
+    });
+    this.midiPanel = new MIDIPanel({
+      rootSelector: "#midiBody",
+      controls: this.controls,
+      onConnect: () => {
+        void this.midiGate.connect();
+      },
+    });
+    // So a browser with no Web MIDI at all says so on the first paint rather
+    // than offering a button that can only fail.
+    this.midiPanel.setStatus(this.midiGate.status);
+    // Resolves after this constructor returns, so registerActions() below has
+    // run by the time a granted origin's auto-connect reaches bind().
+    void this.midiGate.probe();
     this.pointerOrbit = new PointerOrbit({
       canvas,
       getAngles: () => this.rig.angles(),
@@ -534,6 +596,15 @@ class Main {
     this.actions.register("toggleFloor", () => this.toggleWorldLayer("floor", DEFAULT_FLOOR));
     this.actions.register("toggleGrid", () => this.toggleWorldLayer("grid", DEFAULT_GRID));
     this.actions.register("selectPrimitive", (index) => this.selectPrimitiveByIndex(index));
+    // A hardware transport has two buttons where the console has one, so PLAY
+    // and STOP say what they mean rather than toggling: pressing PLAY on a
+    // running scene does nothing. All three end in setPlaying.
+    this.actions.register("resumeLoop", () => this.setPlaying(true));
+    this.actions.register("pauseLoop", () => this.setPlaying(false));
+    this.actions.register("toggleTheatre", () => this.viewportExpander.toggle());
+    this.actions.register("stepPrimitive", (by) => this.stepPrimitive(by));
+    this.actions.register("stepShadingMode", (by) => this.stepShadingMode(by));
+    this.actions.register("applyViewPreset", (index) => this.applyViewPresetByIndex(index));
 
     this.actions.bindDomActions();
     this.keyboard.listen();
@@ -644,6 +715,8 @@ class Main {
     this.pointerOrbit.dispose();
     this.orbitInvertToggles.dispose();
     this.viewportExpander.dispose();
+    this.midiGate.dispose();
+    this.midiRouter.dispose();
     this.resizeObserver?.disconnect();
 
     if (this.pendingResizeRaf !== null) {
@@ -1443,6 +1516,19 @@ class Main {
   }
 
   private togglePause = () => {
+    this.setPlaying(!this.loop.isPlaying);
+  };
+
+  // The one place the run state changes, which is what lets a toggle, a PLAY and
+  // a STOP share the clock seeding and the two readouts rather than each
+  // carrying its own copy. Idempotent by construction: asking for the state the
+  // loop is already in does nothing at all, which is exactly what a hardware
+  // PLAY on a running scene should do.
+  private setPlaying(next: boolean) {
+    if (this.loop.isPlaying === next) {
+      return;
+    }
+
     this.loop.toggle();
 
     // Seeded from the last rendered frame rather than from performance.now(), so
@@ -1453,7 +1539,50 @@ class Main {
     }
 
     this.syncRunState();
-  };
+  }
+
+  // Walks the registry, wrapping at both ends, and reads the name most recently
+  // ASKED for rather than the one on screen — a transition takes 1250ms and a
+  // stepper read from `current` would step from the shape being left.
+  private stepPrimitive(by?: number) {
+    if (by === undefined) {
+      return;
+    }
+
+    const names = this.shapes.names;
+    const requested = this.shapes.requested;
+    const index = requested ? names.indexOf(requested) : 0;
+
+    this.selectPrimitiveByIndex((index + by + names.length) % names.length);
+  }
+
+  // The chip grid's own declared order, so the buttons step in the sequence the
+  // chips are laid out in rather than in whatever order the union happens to be.
+  private stepShadingMode(by?: number) {
+    if (by === undefined) {
+      return;
+    }
+
+    const index = SHADING_MODES.indexOf(this.shadingMode);
+    const next = SHADING_MODES[(index + by + SHADING_MODES.length) % SHADING_MODES.length];
+
+    this.renderTab.selectShadingMode(next);
+  }
+
+  // The binding table names a preset by its key and the router resolves it here,
+  // against the table's own order — so a reordered viewPresets.ts moves the
+  // chips and the buttons together instead of silently re-pointing a button.
+  private applyViewPresetByIndex(index?: number) {
+    if (index === undefined) {
+      return;
+    }
+
+    const key = (Object.keys(viewPresets) as ViewPresetKey[])[index];
+
+    if (key) {
+      this.applyViewPreset(key);
+    }
+  }
 
   private syncRunState() {
     this.statusBar.setRunState(this.loop.isPlaying);
@@ -1537,6 +1666,10 @@ class Main {
   // RESET coverage automatic — a later ticket registers its slice with its
   // defaults and is restored here without this function being edited.
   private resetControls = () => {
+    // Before anything else: a fader message that arrived in this same frame is
+    // about to be flushed, and a value queued against the pre-reset scene would
+    // land on top of the restored one and read as RESET not working.
+    this.midiRouter.clearPending();
     this.pipeline.reset();
     // The two values with no slice of their own: any preset ease still in
     // flight, and the spin the turntable has wound up. The seven angles and the

@@ -30,7 +30,7 @@ const PLUGIN_RULES = [
   ["R6/R8 accessibility", "R6/R8: every field", 6],
   ["R15 module-level let", "R15: no module-level", 2],
   ["I4 for…of", "I4: use `for…of`", 1],
-  ["R20 acronym case", "R20: an acronym keeps", 6],
+  ["R20 acronym case", "R20: an acronym keeps", 7],
 ];
 
 // Native rules are keyed by their diagnostic category, which is what proves the rule is

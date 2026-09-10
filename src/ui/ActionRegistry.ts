@@ -19,6 +19,8 @@
 // implementation is file and clipboard plumbing with no engine in it.
 export type ActionId =
   | "togglePause"
+  | "resumeLoop"
+  | "pauseLoop"
   | "stepFrame"
   | "resetControls"
   | "toggleWireframe"
@@ -26,14 +28,46 @@ export type ActionId =
   | "toggleSky"
   | "toggleFloor"
   | "toggleGrid"
+  | "toggleTheatre"
   | "selectPrimitive"
+  | "stepPrimitive"
+  | "stepShadingMode"
+  | "applyViewPreset"
   | "capturePng"
   | "savePreset"
   | "loadPreset"
   | "copyCode";
 
-// Only the primitive picker's digit keys carry an argument, so it is optional
-// rather than a parameter the other eight handlers would each have to ignore.
+// The four that mean nothing without one. Declared as a union of its own so the
+// two below can be derived from it rather than restated: a fifth indexed action
+// is one edit here and both derived vocabularies follow.
+//
+// resumeLoop and pauseLoop are NOT among them and are not togglePause either.
+// A hardware transport has two buttons where the console has one, and a PLAY that
+// paused a running scene because it happened to be a toggle is the surprise this
+// separation exists to prevent. All three end in the same private setter.
+type IndexedActionId = "selectPrimitive" | "stepPrimitive" | "stepShadingMode" | "applyViewPreset";
+
+// What a binding table may name without supplying anything else. Derived rather
+// than listed, so a table cannot go on offering an action the union has since
+// given an argument to.
+export type PlainActionId = Exclude<ActionId, IndexedActionId>;
+
+// The two that walk a list. Extracted rather than spelled again for the same
+// reason, and narrow on purpose: `by` is ±1, so an id that took an absolute index
+// would be a step binding that silently jumped.
+export type StepActionId = Extract<ActionId, "stepPrimitive" | "stepShadingMode">;
+
+// Only the indexed actions carry an argument, so it is optional rather than a
+// parameter the other handlers would each have to ignore.
+//
+// Deliberately still `number` and not `number | string`, though the MIDI table
+// names view presets by their key. Widening it breaks the inference at Main's
+// selectPrimitive registration (TS2345), and would make `argument` a channel with
+// no correlation to the id at all — every wrong argument becoming a dead button
+// rather than a compile error. The binding table carries the typed ViewPresetKey
+// and the router resolves it to the index this signature wants, so the conversion
+// lives in one place instead of in the type system's blind spot.
 type ActionHandler = (argument?: number) => void;
 
 interface BoundAction {
@@ -52,6 +86,13 @@ class ActionRegistry {
 
   public register(id: ActionId, handler: ActionHandler) {
     this.handlers.set(id, handler);
+  }
+
+  // So a table naming actions can be checked before anything presses one. The
+  // DOM path does this inline in bindDomActions below; a binding table arriving
+  // from a peripheral needs the same question asked from outside.
+  public has(id: ActionId): boolean {
+    return this.handlers.has(id);
   }
 
   public run(id: ActionId, argument?: number) {

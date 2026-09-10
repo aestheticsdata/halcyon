@@ -989,6 +989,27 @@
                 </div>
               </section>
 
+              <div class="divider shape-section__rule"></div>
+
+              <!-- The MIDI surface, as the tab's fourth section: what it is doing
+                   and what every bound control does. MIDIPanel fills the body
+                   from nanoKONTROL2.ts and midiBindings.ts — the same two tables
+                   the router dispatches from, so this list cannot name a binding
+                   that does not act (HAL-194). The CONNECT button is built by the
+                   panel because it is the one control whose label changes with
+                   the state. It lives here rather than in the left column because
+                   .inspector__body scrolls and .col-left does not: a list this
+                   long grew that column past the viewport. -->
+              <section class="panel panel--seam shape-section midi">
+                <div class="panel__header panel__header--card shape-section__card-head">
+                  <span class="panel__title">midi</span>
+                </div>
+                <div class="shape-section__head">
+                  <span class="section-title">MIDI</span>
+                </div>
+                <div class="shape-section__body panel__body--pad-form midi__body" id="midiBody"></div>
+              </section>
+
             </section>
 
             <section id="panelRender" class="inspector-panel" role="tabpanel" data-panel="render" data-mpanel="render">

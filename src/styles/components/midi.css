@@ -1,0 +1,123 @@
+/* Owns: the MIDI card's status line, device line and binding rows.
+   Must not own: the section chrome (panel.css's --seam, inspector.css's .shape-section), the CONNECT button's surface (button.css supplies .btn), or where in the SHAPE tab the section sits (index.html). */
+
+/* Plain block: this section sits in .inspector__body, which scrolls, so it can
+   take its natural height without the growth loop the left column had. */
+.midi__body {
+  display: block;
+}
+
+/* State and button on one line, because the button is the answer to whatever the
+   state says and reading them apart would separate the problem from the fix. */
+.midi__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: var(--size-row-scene);
+}
+
+.midi__state {
+  font: var(--font-weight-medium) var(--text-md) / var(--leading-none) var(--font-mono);
+  letter-spacing: var(--tracking-xs);
+  color: var(--color-text-secondary);
+}
+
+/* Connected is the only state worth colouring, and it is coloured because it is
+   the one a glance should be able to confirm without reading. A refusal is left
+   in the ordinary voice: it is a thing to fix, not an error in the console. */
+.midi__state[data-state="connected"] {
+  color: var(--color-accent);
+}
+
+.midi__state[data-state="unsupported"],
+.midi__state[data-state="denied"] {
+  color: var(--color-text-dim);
+}
+
+/* The next step, when there is one. Wrapping is allowed here and nowhere else in
+   the card: this is the one line that is read rather than glanced at, and a
+   clipped instruction is worse than none. */
+.midi__hint {
+  display: block;
+  padding-bottom: var(--space-2);
+  font: var(--font-weight-regular) var(--text-base) / var(--leading-snug) var(--font-sans);
+  color: var(--color-text-secondary);
+}
+
+/* The product name the browser reports, which is long and not worth wrapping the
+   card for — it is confirmation that the right box answered, not a label. */
+.midi__device {
+  display: block;
+  overflow: hidden;
+  padding-bottom: var(--space-2);
+  font: var(--font-weight-regular) var(--text-base) / var(--leading-none) var(--font-mono);
+  color: var(--color-text-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The last message, in the dimmest voice in the card: it is an instrument
+   reading rather than a control, and it is only ever looked at when something
+   is wrong. Monospaced and clipped for the same reason the device line is —
+   it changes on every message and must not reflow the rows under it. */
+.midi__traffic {
+  display: block;
+  overflow: hidden;
+  padding-bottom: var(--space-2);
+  font: var(--font-weight-regular) var(--text-base) / var(--leading-none) var(--font-mono);
+  color: var(--color-text-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The one scroller in the card. overscroll-behavior-y is deliberately not
+   restated here: reset.css sets it on * so every scroller in the tree is
+   covered by construction rather than by remembering. */
+/* Sized to the room the SHAPE tab has left, which is a function of the window
+   height and nothing else: .inspector__body is content-driven like the rest of
+   the shell, so a list taller than that room grows the page rather than
+   scrolling. Measured against the real tab: at 900px tall the three sections
+   above leave about 270px, at 1250 about 550 — which is the whole list. The
+   calc is the line through those two points; the floor keeps a page of rows on
+   a small window and the ceiling is the full list, past which there is nothing
+   to show. Below the ceiling the list scrolls internally. */
+.midi__bindings {
+  max-height: clamp(12rem, calc(80vh - 28rem), 35rem);
+  overflow-y: auto;
+}
+
+/* The same row shape the GESTURES card uses, and deliberately so: both are
+   reference tables of "this input does that", and two spellings of one idea in
+   adjacent cards would read as two kinds of thing. */
+.midi__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--size-row-scene);
+  border-bottom: var(--size-hairline) solid var(--color-border-row);
+}
+
+.midi__row:last-of-type {
+  border-bottom: 0;
+}
+
+.midi__control {
+  font: var(--font-weight-medium) var(--text-md) / var(--leading-none) var(--font-sans);
+  letter-spacing: var(--tracking-xs);
+  color: var(--color-text-secondary);
+}
+
+.midi__effect {
+  font: var(--font-weight-medium) var(--text-md) / var(--leading-none) var(--font-mono);
+  color: var(--color-text-primary);
+}
+
+/* Sized down from the toolbar's: this one sits inside a 248px card beside a line
+   of type, where the full control height would dominate the block it belongs to. */
+.midi__connect {
+  height: var(--size-row-scene);
+  padding-inline: var(--space-2-5);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-lg);
+}

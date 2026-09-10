@@ -78,10 +78,17 @@ class ShadingSection {
     this.setMode(SHADING_MODES.includes(stored) ? stored : DEFAULT_SHADING_MODE);
   }
 
-  private pick = (id: string) => {
-    const mode = id as ShadingMode;
+  // The same pair a chip click runs, for an input that has no chip to click —
+  // the MIDI surface steps this vocabulary from a button (HAL-194). Public
+  // rather than reached through the chip grid, because ChipGrid.setActive
+  // relights without firing onPick and would leave the renderer behind.
+  public selectMode(mode: ShadingMode) {
     this.setMode(mode);
     this.onSelect(mode);
+  }
+
+  private pick = (id: string) => {
+    this.selectMode(id as ShadingMode);
   };
 
   private setMode(mode: ShadingMode) {

@@ -19,6 +19,7 @@ import DOMScope from "@ui/DOMScope";
 import SliderRow from "@ui/inspector/controls/SliderRow";
 import ToggleRow from "@ui/inspector/controls/ToggleRow";
 
+import type ControlRegistry from "@ui/ControlRegistry";
 import type UIStateStore from "@ui/UIStateStore";
 
 // Sky and floor default on because both ran unconditionally before they were
@@ -46,6 +47,7 @@ export interface EnvironmentSectionOptions {
   togglesSelector: string;
   rowsSelector: string;
   store: UIStateStore;
+  controls: ControlRegistry;
   // Raised after a layer boolean is written, so the owner can re-read the store
   // and push the result to the renderer and to the quick toggles at once.
   onLayersChange: () => void;
@@ -53,6 +55,7 @@ export interface EnvironmentSectionOptions {
 
 class EnvironmentSection {
   private readonly store: UIStateStore;
+  private readonly controls: ControlRegistry;
   private readonly skyRow: ToggleRow;
   private readonly floorRow: ToggleRow;
   private readonly gridRow: ToggleRow;
@@ -66,6 +69,7 @@ class EnvironmentSection {
     const rows = scope.require<HTMLElement>(options.rowsSelector, "ENVIRONMENT rows are missing.");
 
     this.store = options.store;
+    this.controls = options.controls;
     this.store.registerSlice({
       sky: DEFAULT_SKY,
       floor: DEFAULT_FLOOR,
@@ -111,6 +115,8 @@ class EnvironmentSection {
     this.fog = new SliderRow({
       label: "FOG",
       testId: "environment-fog",
+      controls: this.controls,
+      controlId: "fog",
       min: FOG_MIN,
       max: FOG_MAX,
       value: DEFAULT_FOG,
@@ -125,6 +131,8 @@ class EnvironmentSection {
     // and the floor's checker cell.
     this.gridStep = new SliderRow({
       label: "GRID STEP",
+      controls: this.controls,
+      controlId: "gridStep",
       min: GRID_STEP_MIN,
       max: GRID_STEP_MAX,
       value: DEFAULT_GRID_STEP,

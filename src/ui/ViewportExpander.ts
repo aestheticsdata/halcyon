@@ -36,6 +36,19 @@ class ViewportExpander {
     this.button.addEventListener("click", this.onClick);
   }
 
+  // Theatre mode from something that is not this button — the MIDI surface's REC
+  // key (HAL-194). It runs the same setExpanded the click does, so the HUD icon
+  // and its aria-pressed follow either way.
+  //
+  // Reached through an ActionRegistry id rather than by putting data-action on
+  // #viewportExpandToggle: this class already binds that button's click, and
+  // bindDomActions binds every node carrying the attribute — so the button would
+  // gain a second listener and toggle straight back on every press. The same
+  // hazard TransportBar's header records about RESET.
+  public toggle() {
+    this.setExpanded(!this.expanded);
+  }
+
   // Nothing calls this today, for the reason Main.dispose() does not either —
   // one console per page load. It exists because the Escape listener below is
   // armed on document while expanded, and a reconstructed console left mid
@@ -61,7 +74,7 @@ class ViewportExpander {
   }
 
   private onClick = () => {
-    this.setExpanded(!this.expanded);
+    this.toggle();
   };
 
   // Armed only while expanded (R9), rather than left on document for the

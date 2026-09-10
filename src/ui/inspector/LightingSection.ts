@@ -15,6 +15,7 @@
 import DOMScope from "@ui/DOMScope";
 import SliderRow from "@ui/inspector/controls/SliderRow";
 
+import type ControlRegistry from "@ui/ControlRegistry";
 import type UIStateStore from "@ui/UIStateStore";
 import type { UIState } from "@ui/UIStateStore";
 
@@ -26,11 +27,13 @@ export const DEFAULT_SPECULAR = 55;
 export interface LightingSectionOptions {
   root: string;
   store: UIStateStore;
+  controls: ControlRegistry;
   onChange: () => void;
 }
 
 class LightingSection {
   private readonly store: UIStateStore;
+  private readonly controls: ControlRegistry;
   private readonly apply: () => void;
   private readonly azimuth: SliderRow;
   private readonly elevation: SliderRow;
@@ -41,6 +44,7 @@ class LightingSection {
     const root = new DOMScope(document).require<HTMLElement>(options.root, "LIGHTING section is missing.");
 
     this.store = options.store;
+    this.controls = options.controls;
     this.apply = options.onChange;
     // Four flat fields, not the nested lighting.{azimuth,…} object the ticket
     // asked for: registerSlice and resetAll both Object.assign the slice
@@ -58,6 +62,8 @@ class LightingSection {
     this.azimuth = new SliderRow({
       label: "AZIMUTH",
       testId: "lighting-azimuth",
+      controls: this.controls,
+      controlId: "lightAzimuth",
       min: 0,
       max: 360,
       value: DEFAULT_AZIMUTH,
@@ -66,6 +72,8 @@ class LightingSection {
     });
     this.elevation = new SliderRow({
       label: "ELEVATION",
+      controls: this.controls,
+      controlId: "lightElevation",
       min: 0,
       max: 90,
       value: DEFAULT_ELEVATION,
@@ -74,6 +82,8 @@ class LightingSection {
     });
     this.ambient = new SliderRow({
       label: "AMBIENT",
+      controls: this.controls,
+      controlId: "lightAmbient",
       min: 0,
       max: 100,
       value: DEFAULT_AMBIENT,
@@ -82,6 +92,8 @@ class LightingSection {
     });
     this.specular = new SliderRow({
       label: "SPECULAR",
+      controls: this.controls,
+      controlId: "lightSpecular",
       min: 0,
       max: 100,
       value: DEFAULT_SPECULAR,

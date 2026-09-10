@@ -37,6 +37,8 @@ import SliderRow from "@ui/inspector/controls/SliderRow";
 import type { EulerDegrees } from "@camera/CameraRig";
 import type { ViewPresetKey } from "@camera/viewPresets";
 import type { ProjectionMode } from "@primitives/Camera";
+import type ControlRegistry from "@ui/ControlRegistry";
+import type { ControlId } from "@ui/ControlRegistry";
 import type UIStateStore from "@ui/UIStateStore";
 
 export const DEFAULT_PROJECTION: ProjectionMode = "PERSPECTIVE";
@@ -77,11 +79,23 @@ const ZOOM_MAX = 100;
 const VIEW_PRESETS = Object.keys(viewPresets) as ViewPresetKey[];
 const PROJECTIONS: ProjectionMode[] = ["PERSPECTIVE", "ORTHOGRAPHIC"];
 
+// The private angle helper's parameters, as a record rather than a sixth
+// positional (R4) — the same growth TransformSection's own helper took.
+interface AngleRowOptions {
+  label: string;
+  testId: string;
+  controlId: ControlId;
+  limit: number;
+  value: number;
+  onInput: (value: number) => void;
+}
+
 export interface CameraSectionOptions {
   viewGridSelector: string;
   projectionGridSelector: string;
   rowsSelector: string;
   store: UIStateStore;
+  controls: ControlRegistry;
   onFov: (degrees: number) => void;
   onZoom: (sliderValue: number) => void;
   onProjection: (mode: ProjectionMode) => void;
@@ -93,6 +107,7 @@ export interface CameraSectionOptions {
 
 class CameraSection {
   private readonly store: UIStateStore;
+  private readonly controls: ControlRegistry;
   private readonly apply: CameraSectionOptions;
   private readonly projectionGrid: ChipGrid;
   private readonly elev: SliderRow;
@@ -106,6 +121,7 @@ class CameraSection {
     const rows = scope.require<HTMLElement>(options.rowsSelector, "CAMERA section is missing.");
 
     this.store = options.store;
+    this.controls = options.controls;
     this.apply = options;
     this.store.registerSlice({
       fov: DEFAULT_FOV,
@@ -138,22 +154,45 @@ class CameraSection {
     this.projectionGrid.setChips(PROJECTIONS.map((key) => ({ id: key, label: key })));
     this.projectionGrid.setActive(DEFAULT_PROJECTION);
 
-    this.elev = this.buildAngle("ELEV", "camera-elev", ELEV_LIMIT, DEFAULT_CAM_ELEV_DEGREES, (value) => {
-      this.store.setState({ camElev: value });
-      options.onElev(value);
+    this.elev = this.buildAngle({
+      label: "ELEV",
+      testId: "camera-elev",
+      controlId: "camElev",
+      limit: ELEV_LIMIT,
+      value: DEFAULT_CAM_ELEV_DEGREES,
+      onInput: (value) => {
+        this.store.setState({ camElev: value });
+        options.onElev(value);
+      },
     });
-    this.azim = this.buildAngle("AZIM", "camera-azim", AZIM_LIMIT, DEFAULT_CAM_AZIM_DEGREES, (value) => {
-      this.store.setState({ camAzim: value });
-      options.onAzim(value);
+    this.azim = this.buildAngle({
+      label: "AZIM",
+      testId: "camera-azim",
+      controlId: "camAzim",
+      limit: AZIM_LIMIT,
+      value: DEFAULT_CAM_AZIM_DEGREES,
+      onInput: (value) => {
+        this.store.setState({ camAzim: value });
+        options.onAzim(value);
+      },
     });
-    this.camRoll = this.buildAngle("ROLL", "camera-roll", CAM_ROLL_LIMIT, DEFAULT_CAM_ROLL_DEGREES, (value) => {
-      this.store.setState({ camRoll: value });
-      options.onCamRoll(value);
+    this.camRoll = this.buildAngle({
+      label: "ROLL",
+      testId: "camera-roll",
+      controlId: "camRoll",
+      limit: CAM_ROLL_LIMIT,
+      value: DEFAULT_CAM_ROLL_DEGREES,
+      onInput: (value) => {
+        this.store.setState({ camRoll: value });
+        options.onCamRoll(value);
+      },
     });
 
     this.fov = new SliderRow({
       label: "FOV",
       testId: "camera-fov",
+      controls: this.controls,
+      controlId: "fov",
       min: FOV_MIN,
       max: FOV_MAX,
       value: DEFAULT_FOV,
@@ -167,6 +206,8 @@ class CameraSection {
     this.zoom = new SliderRow({
       label: "ZOOM",
       testId: "camera-zoom",
+      controls: this.controls,
+      controlId: "zoom",
       min: ZOOM_MIN,
       max: ZOOM_MAX,
       value: DEFAULT_ZOOM_SLIDER_VALUE,
@@ -270,21 +311,17 @@ class CameraSection {
   }
 
   // Symmetric about zero, which is what a range input can express.
-  private buildAngle(
-    label: string,
-    testId: string,
-    limit: number,
-    value: number,
-    onInput: (value: number) => void,
-  ): SliderRow {
+  private buildAngle(options: AngleRowOptions): SliderRow {
     return new SliderRow({
-      label,
-      testId,
-      min: -limit,
-      max: limit,
-      value,
+      label: options.label,
+      testId: options.testId,
+      controls: this.controls,
+      controlId: options.controlId,
+      min: -options.limit,
+      max: options.limit,
+      value: options.value,
       format: (degrees) => `${degrees}°`,
-      onInput,
+      onInput: options.onInput,
     });
   }
 }

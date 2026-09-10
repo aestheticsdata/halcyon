@@ -33,6 +33,7 @@ import ChipGrid from "@ui/inspector/controls/ChipGrid";
 import SliderRow from "@ui/inspector/controls/SliderRow";
 
 import type { TextureMode } from "@rendering/material";
+import type ControlRegistry from "@ui/ControlRegistry";
 import type UIStateStore from "@ui/UIStateStore";
 
 // AUTHORED and white, because the default state has to be the frame the renderer
@@ -80,6 +81,7 @@ export interface MaterialSectionOptions {
   textureGridSelector: string;
   swatchRowSelector: string;
   store: UIStateStore;
+  controls: ControlRegistry;
   onTexture: (mode: TextureMode) => void;
   onBaseColor: (css: string) => void;
   onUvScale: (factor: number) => void;
@@ -88,6 +90,7 @@ export interface MaterialSectionOptions {
 
 class MaterialSection {
   private readonly store: UIStateStore;
+  private readonly controls: ControlRegistry;
   private readonly apply: MaterialSectionOptions;
   private readonly textures: ChipGrid;
   private readonly swatches: Map<string, HTMLButtonElement>;
@@ -96,6 +99,7 @@ class MaterialSection {
 
   constructor(options: MaterialSectionOptions) {
     this.store = options.store;
+    this.controls = options.controls;
     this.apply = options;
     this.swatches = new Map();
     this.store.registerSlice({
@@ -117,6 +121,8 @@ class MaterialSection {
 
     this.opacity = new SliderRow({
       label: "OPACITY",
+      controls: this.controls,
+      controlId: "opacity",
       min: OPACITY_MIN,
       max: OPACITY_MAX,
       value: DEFAULT_OPACITY_UI,
@@ -128,6 +134,8 @@ class MaterialSection {
     this.uvScale = new SliderRow({
       label: "UV SCALE",
       testId: "material-uv-scale",
+      controls: this.controls,
+      controlId: "uvScale",
       min: UV_MIN,
       max: UV_MAX,
       value: DEFAULT_UV_SCALE,

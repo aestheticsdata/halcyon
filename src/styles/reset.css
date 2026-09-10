@@ -2,6 +2,18 @@
 * {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
+
+  /* No elastic overscroll, anywhere. Declared once on the universal selector
+     rather than per component so a scroller added later is covered without
+     anyone remembering to opt in — the inspector's panes, the shape story, the
+     scene graph and the document itself are all already scrollable surfaces.
+
+     `none`, not `contain`: contain stops the gesture chaining to the parent and
+     leaves the local rubber band, which is the part being rejected.
+
+     The horizontal axis is deliberately untouched. That one is the browser's
+     back gesture rather than decoration, and taking it would cost navigation. */
+  overscroll-behavior-y: none;
 }
 
 html,

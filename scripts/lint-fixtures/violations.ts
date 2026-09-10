@@ -129,8 +129,17 @@ class HashFields {
   }
 }
 
-// R20 ×6 — front, back, middle, and the two acronyms dropped in the first port.
+// R20 ×7 — front, back, middle, the two acronyms dropped in the first port, and
+// the newest family (HAL-194): MIDI is an acronym like every other one here.
 class UiStateStore {
+  private readonly held: number = 1;
+
+  public read(): number {
+    return this.held;
+  }
+}
+
+class MidiRouter {
   private readonly held: number = 1;
 
   public read(): number {

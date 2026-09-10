@@ -34,7 +34,7 @@ or {
     JsIdentifierBinding(),
     TsIdentifierBinding()
 } as $identifier where {
-    $identifier <: r"(?:[A-Z][A-Za-z0-9]*[a-z0-9])?(?:Ui|Ux|Fps|Hud|Dom|Uv|Fov|Url|Uri|Api|Css|Html|Xml|Json|Svg|Rgba|Rgb|Gpu|Cpu|Http|Uuid)(?:[A-Z][A-Za-z0-9]*)?",
+    $identifier <: r"(?:[A-Z][A-Za-z0-9]*[a-z0-9])?(?:Ui|Ux|Fps|Hud|Dom|Uv|Fov|Url|Uri|Api|Css|Html|Xml|Json|Svg|Rgba|Rgb|Gpu|Cpu|Http|Uuid|Midi)(?:[A-Z][A-Za-z0-9]*)?",
     register_diagnostic(
         span = $identifier,
         message = "R20: an acronym keeps its capitals in a type name — UIStateStore, not UiStateStore. R13 then forces the filename to follow."

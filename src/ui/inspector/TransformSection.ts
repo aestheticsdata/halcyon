@@ -26,6 +26,8 @@
 
 import SliderRow from "@ui/inspector/controls/SliderRow";
 
+import type ControlRegistry from "@ui/ControlRegistry";
+import type { ControlId } from "@ui/ControlRegistry";
 import type UIStateStore from "@ui/UIStateStore";
 
 // The mesh opens in its authored rest pose, so all three are zero. The oblique
@@ -59,9 +61,22 @@ const SCALE_MIN = 10;
 const SCALE_MAX = 300;
 const SCALE_PERCENT = 100;
 
+// The private angle helper's parameters, as a record rather than a sixth
+// positional (R4). It grew one when the rows became reachable from a hardware
+// surface, and five was already the limit.
+interface AngleRowOptions {
+  label: string;
+  testId: string;
+  controlId: ControlId;
+  limit: number;
+  value: number;
+  onInput: (value: number) => void;
+}
+
 export interface TransformSectionOptions {
   root: HTMLElement;
   store: UIStateStore;
+  controls: ControlRegistry;
   onPitch: (degrees: number) => void;
   onYaw: (degrees: number) => void;
   onRoll: (degrees: number) => void;
@@ -71,6 +86,7 @@ export interface TransformSectionOptions {
 
 class TransformSection {
   private readonly store: UIStateStore;
+  private readonly controls: ControlRegistry;
   private readonly apply: TransformSectionOptions;
   private readonly pitch: SliderRow;
   private readonly yaw: SliderRow;
@@ -80,6 +96,7 @@ class TransformSection {
 
   constructor(options: TransformSectionOptions) {
     this.store = options.store;
+    this.controls = options.controls;
     this.apply = options;
     // Registered here rather than in the store, which is what makes RESET
     // coverage automatic: resetAll() restores whatever was declared, so this
@@ -92,22 +109,45 @@ class TransformSection {
       scale: DEFAULT_SCALE,
     });
 
-    this.pitch = this.buildAngle("PITCH", "transform-pitch", ANGLE_LIMIT, DEFAULT_PITCH_DEGREES, (value) => {
-      this.store.setState({ pitch: value });
-      options.onPitch(value);
+    this.pitch = this.buildAngle({
+      label: "PITCH",
+      testId: "transform-pitch",
+      controlId: "pitch",
+      limit: ANGLE_LIMIT,
+      value: DEFAULT_PITCH_DEGREES,
+      onInput: (value) => {
+        this.store.setState({ pitch: value });
+        options.onPitch(value);
+      },
     });
-    this.yaw = this.buildAngle("YAW", "transform-yaw", ANGLE_LIMIT, DEFAULT_YAW_DEGREES, (value) => {
-      this.store.setState({ yaw: value });
-      options.onYaw(value);
+    this.yaw = this.buildAngle({
+      label: "YAW",
+      testId: "transform-yaw",
+      controlId: "yaw",
+      limit: ANGLE_LIMIT,
+      value: DEFAULT_YAW_DEGREES,
+      onInput: (value) => {
+        this.store.setState({ yaw: value });
+        options.onYaw(value);
+      },
     });
-    this.roll = this.buildAngle("ROLL", "transform-roll", ANGLE_LIMIT, DEFAULT_ROLL_DEGREES, (value) => {
-      this.store.setState({ roll: value });
-      options.onRoll(value);
+    this.roll = this.buildAngle({
+      label: "ROLL",
+      testId: "transform-roll",
+      controlId: "roll",
+      limit: ANGLE_LIMIT,
+      value: DEFAULT_ROLL_DEGREES,
+      onInput: (value) => {
+        this.store.setState({ roll: value });
+        options.onRoll(value);
+      },
     });
 
     this.spin = new SliderRow({
       label: "SPIN",
       testId: "transform-spin",
+      controls: this.controls,
+      controlId: "spin",
       min: SPIN_MIN,
       max: SPIN_MAX,
       value: DEFAULT_SPIN_DEGREES_PER_SECOND,
@@ -125,6 +165,8 @@ class TransformSection {
     this.scale = new SliderRow({
       label: "SCALE",
       testId: "transform-scale",
+      controls: this.controls,
+      controlId: "scale",
       min: SCALE_MIN,
       max: SCALE_MAX,
       value: DEFAULT_SCALE,
@@ -188,21 +230,17 @@ class TransformSection {
   // engine-space bounds could not: neutral was 320 of 0..800 for pitch, 512 for
   // yaw and 0 of -1000..1200 for roll, a different fraction of the track on each
   // of the three. All three share one limit now, so all three sit mid-track.
-  private buildAngle(
-    label: string,
-    testId: string,
-    limit: number,
-    value: number,
-    onInput: (value: number) => void,
-  ): SliderRow {
+  private buildAngle(options: AngleRowOptions): SliderRow {
     return new SliderRow({
-      label,
-      testId,
-      min: -limit,
-      max: limit,
-      value,
+      label: options.label,
+      testId: options.testId,
+      controls: this.controls,
+      controlId: options.controlId,
+      min: -options.limit,
+      max: options.limit,
+      value: options.value,
       format: (degrees) => `${degrees}°`,
-      onInput,
+      onInput: options.onInput,
     });
   }
 }

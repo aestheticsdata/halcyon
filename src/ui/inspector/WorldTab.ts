@@ -13,10 +13,12 @@ import EnvironmentSection from "@ui/inspector/EnvironmentSection";
 import type { EulerDegrees } from "@camera/CameraRig";
 import type { ViewPresetKey } from "@camera/viewPresets";
 import type { ProjectionMode } from "@primitives/Camera";
+import type ControlRegistry from "@ui/ControlRegistry";
 import type UIStateStore from "@ui/UIStateStore";
 
 export interface WorldTabOptions {
   store: UIStateStore;
+  controls: ControlRegistry;
   onFov: (degrees: number) => void;
   onZoom: (sliderValue: number) => void;
   onProjection: (mode: ProjectionMode) => void;
@@ -37,6 +39,7 @@ class WorldTab {
       projectionGridSelector: "#projectionChips",
       rowsSelector: "#cameraRows",
       store: options.store,
+      controls: options.controls,
       onFov: options.onFov,
       onZoom: options.onZoom,
       onProjection: options.onProjection,
@@ -47,6 +50,7 @@ class WorldTab {
     });
 
     this.environment = new EnvironmentSection({
+      controls: options.controls,
       togglesSelector: "#environmentToggles",
       rowsSelector: "#environmentRows",
       store: options.store,

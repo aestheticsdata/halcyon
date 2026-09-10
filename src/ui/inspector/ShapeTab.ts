@@ -11,6 +11,7 @@ import TransformSection from "@ui/inspector/TransformSection";
 
 import type { Data3D } from "@data/types";
 import type { TextureMode } from "@rendering/material";
+import type ControlRegistry from "@ui/ControlRegistry";
 import type SliderRow from "@ui/inspector/controls/SliderRow";
 import type ShapeThumbnails from "@ui/inspector/ShapeThumbnails";
 import type UIStateStore from "@ui/UIStateStore";
@@ -18,6 +19,7 @@ import type UIStateStore from "@ui/UIStateStore";
 export interface ShapeTabOptions {
   objects3D: Data3D;
   store: UIStateStore;
+  controls: ControlRegistry;
   onPick: (primitive: string) => void;
   onPitch: (degrees: number) => void;
   onYaw: (degrees: number) => void;
@@ -46,6 +48,7 @@ class ShapeTab {
     this.transform = new TransformSection({
       root: this.require("#transformRows"),
       store: options.store,
+      controls: options.controls,
       onPitch: options.onPitch,
       onYaw: options.onYaw,
       onRoll: options.onRoll,
@@ -54,6 +57,7 @@ class ShapeTab {
     });
 
     this.material = new MaterialSection({
+      controls: options.controls,
       root: this.require("#materialRows"),
       textureGridSelector: "#textureGrid",
       swatchRowSelector: "#baseSwatches",

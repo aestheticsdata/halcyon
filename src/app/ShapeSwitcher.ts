@@ -69,6 +69,15 @@ class ShapeSwitcher {
     return this.targetPrimitiveName;
   }
 
+  // The shape the console is heading for, which is not `target` while a request
+  // sits in the queue behind a running transition. A stepper has to read this or
+  // fast presses do not accumulate: each would step from the shape currently
+  // arriving rather than from the last one asked for, so five presses on TRACK ▶
+  // would advance one.
+  public get requested(): string | null {
+    return this.queuedPrimitiveName ?? this.targetPrimitiveName ?? this.currentPrimitiveName;
+  }
+
   // The machine's own state name, for the one reader outside the render path:
   // Main publishes it on the stage, so the demo harness (HAL-192) can wait for a
   // switch to finish rather than sleep for its duration.

@@ -38,6 +38,18 @@ class ViewportHUD {
   }
 }
 
+class MIDIBindingRouter {
+  private readonly bound: number;
+
+  constructor(bound: number) {
+    this.bound = bound;
+  }
+
+  public get count(): number {
+    return this.bound;
+  }
+}
+
 class FPSMeter {
   private readonly samples: number[];
 

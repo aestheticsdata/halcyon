@@ -12,6 +12,9 @@
 // read a bare signed integer. Callers pass a format hook rather than a unit
 // string, since two of the five divide before they print.
 
+import type ControlRegistry from "@ui/ControlRegistry";
+import type { ControlId } from "@ui/ControlRegistry";
+
 export interface SliderRowOptions {
   label: string;
   min: number;
@@ -19,6 +22,18 @@ export interface SliderRowOptions {
   value: number;
   format: (value: number) => string;
   onInput: (value: number) => void;
+  // The registry a hardware surface reaches this row through, and the name it
+  // knows the row by. Both or neither.
+  //
+  // The registration is assembled HERE rather than by the section, and that is
+  // the point of it being an option at all: an entry has to move the thumb and
+  // then run what onInput runs, and setValue() deliberately does not fire
+  // onInput. A section writing the pair by hand writes the second half and the
+  // engine moves while the track stays where it was. This row is also the only
+  // object that holds the label, the bounds and the callback at once, so it is
+  // the only one that can fill an entry without a second copy of any of them.
+  controls?: ControlRegistry;
+  controlId?: ControlId;
   // Set when the control has no engine behind it. The row still moves and still
   // stores its value; it simply changes nothing on the canvas.
   placeholder?: { title: string; describedBy: string };
@@ -94,6 +109,23 @@ class SliderRow {
     });
 
     this.writeValue(options.value);
+
+    if (options.controls && options.controlId) {
+      options.controls.register(options.controlId, {
+        label: options.label,
+        min: options.min,
+        max: options.max,
+        // The row's opening value IS its default — the sections seed both from
+        // the same constant — and it is what a fader's midpoint resolves to.
+        defaultValue: options.value,
+        apply: (value) => {
+          // The row's answer rather than the caller's, for the reason setValue
+          // itself gives: this is the one place that knows the range, so it is
+          // the one place that can say which number survived it.
+          options.onInput(this.setValue(value));
+        },
+      });
+    }
   }
 
   public get element(): HTMLElement {
