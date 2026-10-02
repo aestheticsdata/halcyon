@@ -16,6 +16,7 @@ Output lands in `e2e/demo/out/` (gitignored):
 - `chapters.vtt` — WebVTT, for `<track kind="chapters">` on the portfolio's own `<video>`
 - `chapters.ffmeta` — ffmpeg metadata; already applied to the mp4, kept so a re-encode can reapply it
 - `chapters.json` — the same marks with millisecond precision
+- `events.json` — everything the hand did, on the film's clock: see **For the landing page's films**
 - `shots/01-console.png` and seven more — stills at 3840×2160, for a page that wants pictures too
 - `upload/preset.json` — the preset chapter 10 saves and loads back, written by the console itself
 
@@ -242,6 +243,24 @@ ports carrying `export class`, parameter properties, JSDoc and a module-level `l
 `pnpm lint` keeps its `./src` scope; the authored files are run through the repo's formatter by
 hand. `pnpm run typecheck` covers `e2e/` through the `@e2e/*` alias in `tsconfig.json` — the one
 alias not mirrored in `vite.config.js`, because nothing under `e2e/` is bundled.
+
+## For the landing page's films: `events.json`
+
+The landing page cuts a film of about a minute from this take with Remotion (`landing-page/films/`):
+it pushes in on what each gesture changes, speeds through the reading pauses, and draws its own
+pointer. Pixels alone cannot drive that, so every take also writes `events.json` (`events.ts`,
+ported from bkmk's harness with the log in `cursor.ts`, `fixture.ts` and `recorder.ts`): every
+pointer step, every press, every key, and every storyboard verb — `click`, `moveTo`, `press`,
+`scroll`, `dwell` — with its start and end on the film's clock and the `data-testid`, `data-*`
+members and box of the element it was aimed at. The console's own contract does the naming: a chip
+is logged by its `data-chip-id`, a toolbar button by its `data-action`, a pick by its `data-shape`.
+The edit names its beats by those, never by a second, so a re-take keeps it. A drag is logged as
+pointer steps only — the film reaches a fader's movement by an offset from the click before it. A
+take for a film is filmed without the drawn arrow, which the film redraws:
+
+```bash
+DEMO_CURSOR=off DEMO_FPS=30 DEMO_CRF=20 pnpm video:generate
+```
 
 ## Knobs
 
