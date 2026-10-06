@@ -58,9 +58,9 @@
 //   https://en.wikipedia.org/wiki/Skew_apeirohedron
 //   https://en.wikipedia.org/wiki/Omnitruncated_cubic_honeycomb
 
-import PolyhedronBuilder from "@data/builders/PolyhedronBuilder";
 import SkewApeirohedronBuilder from "@data/builders/SkewApeirohedronBuilder";
 import { AXES, SIGNS } from "@data/builders/symmetry";
+import TruncatedCuboctahedronCell from "@data/builders/TruncatedCuboctahedronCell";
 
 import type { SkewCell } from "@data/builders/SkewApeirohedronBuilder";
 import type { Object3D } from "@data/types";
@@ -73,22 +73,14 @@ const RADIUS = 100;
 // note in shapeInfo is written against.
 const DEFAULT_CUBES_PER_AXIS = 2;
 
-// Edge length 2, so that u = 1 + sqrt(2) puts every coordinate in Z[sqrt(2)]
-// and none of them is a half. The truncated cuboctahedron's 48 vertices are the
-// signed permutations of (1, u, 2u - 1) — the same three magnitudes
-// TruncatedCuboctahedronGenerator uses, at twice the scale.
+// Edge length 2, the frame TruncatedCuboctahedronCell is written in, so that
+// u = 1 + sqrt(2) puts every coordinate in Z[sqrt(2)] and none of them is a half.
 const U = 1 + Math.SQRT2;
-const MAGNITUDES = [1, U, 2 * U - 1];
 
 // The cubic honeycomb's cube side in this frame: a truncated cuboctahedron, a
 // prism, and the next truncated cuboctahedron.
 const CUBE = 4 * U;
 const HALF_CUBE = 2 * U;
-
-// Irrational coordinates, so the furthest-along-the-normal test needs one. The
-// margin is enormous — the runner-up along any face normal trails by more than
-// a whole edge — so this only has to beat rounding.
-const REACH_TOLERANCE = 1e-6;
 
 // The book's plate paints muRCO the paler of the two, which is also what keeps
 // it apart from muCO in a picker chip. Inner tones are the same hues in shadow:
@@ -122,7 +114,7 @@ class MurhombicuboctahedronGenerator {
   constructor(cubesPerAxis: number = DEFAULT_CUBES_PER_AXIS) {
     this.builder = new SkewApeirohedronBuilder();
     this.cubesPerAxis = cubesPerAxis;
-    this.truncatedCuboctahedron = this.buildTruncatedCuboctahedronFaces();
+    this.truncatedCuboctahedron = new TruncatedCuboctahedronCell().squaresAndHexagons;
     this.prisms = AXES.map((axis) => this.buildPrismFaces(axis));
   }
 
@@ -170,65 +162,6 @@ class MurhombicuboctahedronGenerator {
     }
 
     return cells;
-  }
-
-  // The 12 squares and 8 hexagons, found by which vertices reach furthest along
-  // each face normal rather than tabulated. The 6 octagons on the axis normals
-  // are simply never asked for: those are the openings.
-  private buildTruncatedCuboctahedronFaces(): number[][][] {
-    const polyhedron = new PolyhedronBuilder();
-    const vertices = this.buildVertices();
-    const normals: number[][] = [];
-
-    AXES.forEach((zeroAxis) => {
-      const [first, second] = AXES.filter((axis) => axis !== zeroAxis);
-
-      SIGNS.forEach((firstSign) => {
-        SIGNS.forEach((secondSign) => {
-          const normal = [0, 0, 0];
-          normal[first] = firstSign;
-          normal[second] = secondSign;
-          normals.push(normal);
-        });
-      });
-    });
-
-    SIGNS.forEach((signX) => {
-      SIGNS.forEach((signY) => {
-        SIGNS.forEach((signZ) => {
-          normals.push([signX, signY, signZ]);
-        });
-      });
-    });
-
-    const faces = polyhedron.facesFromNormals(vertices, normals, REACH_TOLERANCE);
-
-    return polyhedron.orderFaces(vertices, faces).map((face) => face.map((index) => vertices[index]));
-  }
-
-  private buildVertices(): number[][] {
-    const orderings = [
-      [0, 1, 2],
-      [0, 2, 1],
-      [1, 0, 2],
-      [1, 2, 0],
-      [2, 0, 1],
-      [2, 1, 0],
-    ];
-    const vertices: number[][] = [];
-
-    orderings.forEach((ordering) => {
-      SIGNS.forEach((signX) => {
-        SIGNS.forEach((signY) => {
-          SIGNS.forEach((signZ) => {
-            const signs = [signX, signY, signZ];
-            vertices.push(ordering.map((slot, axis) => signs[axis] * MAGNITUDES[slot]));
-          });
-        });
-      });
-    });
-
-    return vertices;
   }
 
   // The 8 lateral squares only. The two octagonal caps are the openings, and

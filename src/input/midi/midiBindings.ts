@@ -98,7 +98,7 @@ const midiBindings: MIDIBindingTable = {
   stop: { kind: "action", id: "pauseLoop" },
   record: { kind: "action", id: "toggleTheatre" },
 
-  // The only input that reaches all thirty-two primitives. The keyboard's digit
+  // The only input that reaches all thirty-four primitives. The keyboard's digit
   // row stops at nine, which shortcuts.ts is explicit about: it will not print a
   // range promising keys no keyboard has.
   trackPrev: { kind: "step", id: "stepPrimitive", by: -1 },

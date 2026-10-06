@@ -472,6 +472,27 @@ const entries = {
       },
     ],
   },
+  cantitruncatedCubicSponge: {
+    family: "POLYHEDRA",
+    title: "Cantitruncated cubic sponge",
+    description:
+      "The 4.4.6.6 sponge of the uniform table, in verdigris: every truncated cuboctahedron of the honeycomb with its octagons opened out as the tunnels.",
+    geometricFeature:
+      "Two squares and two hexagons at every vertex; the octagons alone are not enough, the squares between truncated octahedra and cubes have to go as well.",
+    densityLabel: "High density",
+    generator: "cantitruncated cubic lattice",
+    textureSummary: "No textures",
+    references: [
+      {
+        label: "Wikipedia",
+        url: "https://en.wikipedia.org/wiki/Skew_apeirohedron",
+      },
+      {
+        label: "Wikipedia",
+        url: "https://en.wikipedia.org/wiki/Cantitruncated_cubic_honeycomb",
+      },
+    ],
+  },
   prismaticFourFive: {
     family: "POLYHEDRA",
     title: "Prismatic {4,5}",

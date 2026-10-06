@@ -34,6 +34,7 @@ key is the shape the console boots on.
 | muoctahedron | 216 | 808 |
 | murhombicuboctahedron | 672 | 2392 |
 | mutetrahedron | 275 | 1360 |
+| cantitruncatedCubicSponge | 864 | 3024 |
 | prismaticFourFive | 128 | 464 |
 | tetrahelix | 18 | 32 |
 | water | 657 | 1104 |
