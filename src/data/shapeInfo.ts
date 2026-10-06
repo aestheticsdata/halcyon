@@ -493,6 +493,27 @@ const entries = {
       },
     ],
   },
+  tetrahelix: {
+    family: "POLYHEDRA",
+    title: "Boerdijk–Coxeter helix",
+    description:
+      "Regular tetrahedra glued face to face in a single right-handed chain, its free faces wound into three ribbons of rose, gold and blue.",
+    geometricFeature:
+      "Six triangles at every vertex; the twist of arccos(−2/3) per tetrahedron is no rational fraction of a turn, so no two cells ever share an orientation.",
+    densityLabel: "Low density",
+    generator: "face-to-face tetrahedra",
+    textureSummary: "No textures",
+    references: [
+      {
+        label: "Wikipedia",
+        url: "https://en.wikipedia.org/wiki/Boerdijk%E2%80%93Coxeter_helix",
+      },
+      {
+        label: "Wikipedia",
+        url: "https://en.wikipedia.org/wiki/Skew_apeirohedron",
+      },
+    ],
+  },
   water: {
     family: "MOLECULES",
     title: "Water",

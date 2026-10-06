@@ -209,7 +209,7 @@ describe("the resolved channels", () => {
   // Over the registry rather than over three hand-picked colours: this is the
   // invariant Lighting relies on for every triangle it shades, and the blend has
   // four branches that could each drift from it on their own.
-  it("agrees with its own fill string on every triangle of all thirty-two shapes", () => {
+  it("agrees with its own fill string on every triangle of all thirty-three shapes", () => {
     const material = materialOf({ baseColor: "rgb(128, 200, 255)" });
     const disagreements = Object.entries(data).flatMap(([name, object3D]) =>
       object3D.triangles
@@ -241,10 +241,10 @@ describe("the resolved channels", () => {
 // `rgba(0,180,89,1)` and the blend prints `rgba(0, 180, 89, 1)`, which is the
 // same colour spelled differently and the same pixel either way.
 describe("the default material over the whole registry", () => {
-  it("resolves every authored triangle in all thirty-two shapes to the colour it was authored with", () => {
+  it("resolves every authored triangle in all thirty-three shapes to the colour it was authored with", () => {
     const shapes = Object.entries(data);
 
-    expect(shapes).toHaveLength(32);
+    expect(shapes).toHaveLength(33);
 
     shapes.forEach(([name, object3D]) => {
       object3D.triangles.forEach((triangle, index) => {
