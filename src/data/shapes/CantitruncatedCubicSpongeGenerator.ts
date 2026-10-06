@@ -63,9 +63,30 @@
 // alone, the chunk's boundary is the octagons, so its openings are the same
 // tunnels the interior has.
 //
+// THE PLATE'S SECOND 4.4.6.6 IS THIS SURFACE, and is deliberately not a second
+// shape. Its file is named for the omnitruncated honeycomb, which cannot be
+// right — that honeycomb has one hexagon at a vertex, and 4.4.6.6 needs two —
+// and its uploader's own note on Commons says it "should be named Cantitruncated
+// cubic honeycomb apeirohedron 4466b". That much is sourced. The rest is
+// derived: the count above leaves this honeycomb exactly ONE 4.4.6.6
+// sub-complex. Of the three 2 + 2 splits of a vertex's four cells only one
+// keeps no octagon, and once every vertex takes it, the two truncated
+// cuboctahedra at a vertex always share a side and the truncated octahedron and
+// the cube the other, which fixes every cell in the honeycomb. There is no
+// second half to find, the way muCO is a second half beside muO.
+//
+// What the second figure draws instead is the same faces cut around the OTHER
+// labyrinth: truncated octahedra with their hexagons kept and their squares
+// opened, and a cube on each opening whose four side squares are kept. Those are
+// exactly the hexagons and squares kept here, seen from the other side, which
+// is why it reads as a burr where this chunk reads as a slab of rings. The
+// epic's rule for a shape the plate draws twice is one entry, so the burr is a
+// different chunk of this one, not another shape.
+//
 // References:
 //   https://en.wikipedia.org/wiki/Skew_apeirohedron
 //   https://en.wikipedia.org/wiki/Cantitruncated_cubic_honeycomb
+//   https://commons.wikimedia.org/wiki/File:Omnitruncated_cubic_honeycomb_apeirohedron_4466.png
 
 import SkewApeirohedronBuilder from "@data/builders/SkewApeirohedronBuilder";
 import TruncatedCuboctahedronCell from "@data/builders/TruncatedCuboctahedronCell";
