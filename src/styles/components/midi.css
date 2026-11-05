@@ -71,9 +71,8 @@
   white-space: nowrap;
 }
 
-/* The one scroller in the card. overscroll-behavior-y is deliberately not
-   restated here: reset.css sets it on * so every scroller in the tree is
-   covered by construction rather than by remembering. */
+/* The one scroller in the card. Its overscroll-behavior-y lives with the other
+   vertical scrollers' in reset.css. */
 /* Sized to the room the SHAPE tab has left, which is a function of the window
    height and nothing else: .inspector__body is content-driven like the rest of
    the shell, so a list taller than that room grows the page rather than

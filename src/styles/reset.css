@@ -2,17 +2,28 @@
 * {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
+}
 
-  /* No elastic overscroll, anywhere. Declared once on the universal selector
-     rather than per component so a scroller added later is covered without
-     anyone remembering to opt in — the inspector's panes, the shape story, the
-     scene graph and the document itself are all already scrollable surfaces.
+/* No elastic overscroll on the document and on every box that really scrolls
+   vertically: the inspector's body, a scrolling card, the shape picker's list
+   and the MIDI bindings. A new vertical scroller joins this list.
 
-     `none`, not `contain`: contain stops the gesture chaining to the parent and
-     leaves the local rubber band, which is the part being rejected.
+   Not on `*`: every element whose overflow is not visible — the toolbar's
+   horizontal strip, any overflow: hidden card — is a scroll container too, and
+   with `none` it keeps the wheel instead of handing it to the page, so the page
+   froze under the pointer.
 
-     The horizontal axis is deliberately untouched. That one is the browser's
-     back gesture rather than decoration, and taking it would cost navigation. */
+   `none`, not `contain`: contain stops the gesture chaining to the parent and
+   leaves the local rubber band, which is the part being rejected.
+
+   The horizontal axis is deliberately untouched. That one is the browser's
+   back gesture rather than decoration, and taking it would cost navigation. */
+html,
+body,
+.inspector__body,
+.panel__body--scroll,
+.shape-picker__list,
+.midi__bindings {
   overscroll-behavior-y: none;
 }
 
