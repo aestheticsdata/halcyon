@@ -375,9 +375,54 @@ manual_rollback() {
   exit 0
 }
 
+# The build below runs against local dependencies, which the previous deploy deleted
+# (`clean_local_build`). Reinstalled from the lockfile, exactly, and only when missing. A failed
+# install is not caught here: it falls through to the ERR trap like a failed build, so Zeus hears
+# about it and nothing is uploaded. No subshell: `-E` would hand it the ERR trap and report twice.
+ensure_local_deps() {
+  if [ ! -d "$SCRIPT_DIR/node_modules" ]; then
+    log "➡️  Installing local dependencies for the build"
+    pnpm --dir "$SCRIPT_DIR" install --frozen-lockfile > /dev/null
+  fi
+}
+
+# The laptop is short on disk: a deploy leaves no build output behind, whether it succeeds or not.
+# The local `vite build` stays: its `dist` is the release, rsynced as is, and ks-b never builds.
+# Once uploaded it is deleted, along with Playwright's `test-results` and `node_modules`, which the
+# next deploy reinstalls (`ensure_local_deps`). The film's takes in `e2e/demo/out` are recordings,
+# not build output, and stay. A vite running from this checkout (dev or preview) loads from
+# `node_modules` and serves `dist`, so both are kept while one is; the checkout's path in the
+# pattern keeps another project's vite from counting. The size is `|| true`: `du` exits non-zero on
+# a single unreadable file, and errexit would end the trap before the `rm`.
+clean_local_build() {
+  local dev_server="$SCRIPT_DIR/node_modules/.*vite"
+  local freed=() dir
+  for dir in test-results; do
+    if [ -d "$SCRIPT_DIR/$dir" ]; then
+      freed+=("$(du -sh "$SCRIPT_DIR/$dir" 2>/dev/null | cut -f1 || true) $dir")
+      rm -rf -- "${SCRIPT_DIR:?}/$dir"
+    fi
+  done
+  if pgrep -f "$dev_server" > /dev/null 2>&1; then
+    log "ℹ️  vite is running from this checkout: local dist and node_modules kept"
+  else
+    for dir in dist node_modules; do
+      if [ -d "$SCRIPT_DIR/$dir" ]; then
+        freed+=("$(du -sh "$SCRIPT_DIR/$dir" 2>/dev/null | cut -f1 || true) $dir")
+        rm -rf -- "${SCRIPT_DIR:?}/$dir"
+      fi
+    done
+  fi
+  [ ${#freed[@]} -gt 0 ] && log "🧹 Local build output removed: ${freed[*]}"
+  return 0
+}
+
 if [ "${1:-}" = "rollback" ]; then
   manual_rollback
 fi
+
+# Armed after the rollback branch, which builds nothing and exits on its own.
+trap clean_local_build EXIT
 
 TIMESTAMP=$(date +"%Y-%m-%d-%Hh%M%S")
 RELEASE_DIR="$REMOTE_FRONT/releases/$TIMESTAMP"
@@ -436,6 +481,7 @@ on_error() {
 
 trap 'on_error $LINENO' ERR
 
+ensure_local_deps
 log "Building project..."
 pnpm build
 ok "Build complete."
