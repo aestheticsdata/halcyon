@@ -97,6 +97,11 @@ ZEUS_ENV_FILE="${ZEUS_ENV_FILE:-/var/www/zeus/nest-api/.env}"
 # the same reason, and so can never offer the marker as a release to roll back to.
 ZEUS_MARKER="$REMOTE_FRONT/releases/.zeus-last-$ZEUS_ROLE"
 
+# ZEU-93. The rollback, as a file on ks-b: written by each deploy before its switch, holding the
+# release that was live until then. `rollback_auto` runs it, and so does Zeus's post-deploy
+# verification when the release degrades.
+ROLLBACK_SCRIPT_REMOTE="$REMOTE_FRONT/rollback-front.sh"
+
 GREEN="\033[0;32m"
 BLUE="\033[38;5;81m"
 RED="\033[0;31m"
@@ -262,6 +267,9 @@ zeus_report() {
     [ -n "${ZEUS_COMMIT:-}" ] && printf ',"commit":"%s"' "$(json_escape "$ZEUS_COMMIT")"
     [ -n "${ZEUS_BRANCH:-}" ] && printf ',"branch":"%s"' "$(json_escape "$ZEUS_BRANCH")"
     [ -n "$summary" ] && printf ',"summary":"%s"' "$(json_escape "$summary")"
+    # ZEU-93. A static site has no database: 0, so Zeus may roll it back — with the file below.
+    [[ "${ZEUS_MIGRATIONS_APPLIED:-}" =~ ^[0-9]+$ ]] && printf ',"migrationsApplied":%s' "$ZEUS_MIGRATIONS_APPLIED"
+    [ "$status" = "success" ] && [ -n "${ZEUS_ROLLBACK_SCRIPT:-}" ] && printf ',"rollbackScript":"%s"' "$ZEUS_ROLLBACK_SCRIPT"
     printf ',"commits":%s}' "$commits"
   } > "$payload"
 
@@ -491,6 +499,36 @@ ssh "$SERVER_USER@$SERVER_HOST" "mkdir -p '$REMOTE_FRONT/releases'"
 
 CURRENT_RELEASE=$(ssh "$SERVER_USER@$SERVER_HOST" "readlink '$REMOTE_FRONT/current' || true")
 
+# ZEU-93. The way back to what is live now, written before anything changes. A first deploy has
+# nothing to go back to: no file, no rollback reported, and Zeus can only alert on it.
+ZEUS_MIGRATIONS_APPLIED=0
+ZEUS_ROLLBACK_SCRIPT=""
+if [ -n "$CURRENT_RELEASE" ]; then
+  ssh "$REMOTE_USER_HOST" \
+    PREVIOUS="$CURRENT_RELEASE" \
+    LINK="$REMOTE_FRONT/current" \
+    TARGET="$ROLLBACK_SCRIPT_REMOTE" \
+    'bash -s' << 'EOF'
+set -Eeuo pipefail
+TMP="$TARGET.tmp.$$"
+{
+  echo '#!/usr/bin/env bash'
+  echo '# Written by deploy-halcyon.sh on every deploy (ZEU-93) - do not edit it here, edit the script.'
+  echo '# Points current back at the release that was live before the latest deploy.'
+  echo 'set -Eeuo pipefail'
+  printf 'PREVIOUS=%q\nLINK=%q\n' "$PREVIOUS" "$LINK"
+  cat << 'BODY'
+[ -d "$PREVIOUS" ] || { echo "the previous release $PREVIOUS is gone" >&2; exit 1; }
+rm -rf "$LINK" && ln -s "$PREVIOUS" "$LINK"
+echo "current points at $PREVIOUS again"
+BODY
+} > "$TMP"
+chmod 700 "$TMP"
+mv "$TMP" "$TARGET"
+EOF
+  ZEUS_ROLLBACK_SCRIPT="$ROLLBACK_SCRIPT_REMOTE"
+fi
+
 log "Uploading new release..."
 # The `||` swallows the ERR trap, so this path reports for itself. Nothing is live yet — the
 # upload writes into a fresh release folder and the symlink still points at the old one.
@@ -514,7 +552,7 @@ rollback_auto() {
   local restored="false"
   if [ -n "$CURRENT_RELEASE" ]; then
     if ssh "$SERVER_USER@$SERVER_HOST" \
-      "rm -rf '$REMOTE_FRONT/current' && ln -s '$CURRENT_RELEASE' '$REMOTE_FRONT/current'"; then
+      "bash '$ROLLBACK_SCRIPT_REMOTE'"; then
       ok "Rollback restored previous release."
       restored="true"
     else
